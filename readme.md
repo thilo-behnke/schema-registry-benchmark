@@ -1,6 +1,6 @@
 # About
 
-Benchmark for Confluent Schema Registry.
+Benchmark and alysis for the [Confluent Schema Registry](https://github.com/confluentinc/schema-registry/tree/v7.3.1).
 
 # How the analysis works
 
@@ -140,3 +140,18 @@ cat logs/docker_usage.log | awk -v F=" " 'FNR > 1 {print $6}' | gnuplot -p -e 'p
 [2023-02-04 19:04:33,631] INFO Wait to catch up until the offset at 34501 (io.confluent.kafka.schemaregistry.storage.KafkaStore)
 [2023-02-04 19:04:33,631] INFO Reached offset at 34501 (io.confluent.kafka.schemaregistry.storage.KafkaStore)
 ```
+
+# Whitebox analysis
+
+Referring to version `v7.3.1`.
+
+- The schema registry does not use a database or the file system, so the schemas are read once on initialization, then continuously on schema updates, and are all stored in memory.
+  - Speculation: Probably because of performance so that producers/consumers don't have to suffer a cache miss. If there are few schemas (< 1000), nothing speaks against having all schemas in memory.
+
+- Is there configuration that indicates a limit of registered schemas?
+  - There are 2 parameters that refer to cache sizes: `SCHEMA_CACHE_SIZE_CONFIG` and `SCHEMA_CACHE_EXPIRY_SECS_CONFIG`
+  - These parameters do not refer to the schemas themselves, but `RawSchema -> ParsedSchema`
+    - The internal structure of a `ParsedSchema` is larger than the `RawSchema`, which is basically just the JSON Avro schema (and some more metadata)
+  - The default size for the cache is `1000` with an expiration of `300s` 
+    - If a `ParsedSchema` is not within the cache, it needs to be parsed again from the `RawSchema`
+    - TODO: The investigation on effects of cache misses is another investigation
