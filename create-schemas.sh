@@ -30,7 +30,7 @@ function log_docker_usage {
   if [[ ! -f "$log_dir/$docker_usage_log" ]]; then
     echo "TIME" "TIMESTAMP" "NR SCHEMAS" $(docker stats schema-registry-tests_schema-registry_1 --no-stream | head -1) >> "$log_dir/$docker_usage_log"
   fi
-  echo $(date +%d.%m.%Y-%H:%M:%S) "$i" $(docker stats schema-registry-tests_schema-registry_1 --no-stream | tail -1) >> "$log_dir/$docker_usage_log"
+  echo $(date +%d.%m.%Y-%H:%M:%S) "$1" $(docker stats schema-registry-tests_schema-registry_1 --no-stream | tail -1) >> "$log_dir/$docker_usage_log"
 }
 
 function log_java_heap_histo {
