@@ -1,0 +1,32 @@
+version: "3.9"
+
+networks:
+  app-tier:
+    driver: bridge
+services:
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+    networks:
+      - app-tier
+  kafka:
+    image: 'bitnami/kafka:latest'
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    networks:
+      - app-tier
+  schema-registry:
+    image: 'confluentinc/cp-schema-registry'
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:9092'
+      SCHEMA_REGISTRY_HOST_NAME: 'localhost'
+    depends_on:
+      - kafka
+    networks:
+      - app-tier
