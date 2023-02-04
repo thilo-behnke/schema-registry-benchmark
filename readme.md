@@ -100,7 +100,6 @@ curl localhost:8081/subjects/my-subject/versions/-12
 - The increase of memory per schema is linear and lower than could be assumed when just looking at the first 1000 registered schemas
   - There is an exponential increase until ~150k schemas to ~ 850MiB of memory usage, after that the increase is marginal.
   - Between 33600 and 33700 registered schemas the graph jumps because of 34MiB memory increase for just 100 schemas.
-
 ```
 cat logs/docker_usage.log | awk -v F=" " 'FNR > 1 {print $6}' | gnuplot -p -e 'plot "/dev/stdin"'
 ```
@@ -112,6 +111,11 @@ cat logs/docker_usage.log | awk -v F=" " 'FNR > 1 {print $6}' | gnuplot -p -e 'p
 04.02.2023-19:59:11 033600 17c20aee0821 schema-registry-tests_schema-registry_1 0.27% 834.1MiB / 31.33GiB 2.60% 76.3MB / 54.5MB 0B / 1.12MB 62
 04.02.2023-19:59:46 033700 17c20aee0821 schema-registry-tests_schema-registry_1 0.29% 868.7MiB / 31.33GiB 2.71% 76.6MB / 71.5MB 0B / 1.12MB 63
 ```
+
+- There is no noticeable increase of cpu usage
+  - There are some spikes that might just have been caused by docker / my OS
+
+~[cpu increase for 35k schemas](images/cpu_usage.png)
 
 - Performance impact of a schema registry holding many schemas:
   - Fetching: There is no noticeable performance penalty when the registry holds many schemas, fetching a schema is still "instant"
