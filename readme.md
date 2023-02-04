@@ -115,7 +115,7 @@ cat logs/docker_usage.log | awk -v F=" " 'FNR > 1 {print $6}' | gnuplot -p -e 'p
 - There is no noticeable increase of cpu usage
   - There are some spikes that might just have been caused by docker / my OS
 
-~[cpu increase for 35k schemas](images/cpu_usage.png)
+![cpu increase for 35k schemas](images/cpu_usage.png)
 
 - Performance impact of a schema registry holding many schemas:
   - Fetching: There is no noticeable performance penalty when the registry holds many schemas, fetching a schema is still "instant"
