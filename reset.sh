@@ -20,6 +20,7 @@ perm_delete_res_error_code=$(echo "$perm_delete_res" | jq ".error_code?")
 if [[ -z "$delete_res_error_code" ]] && [[ -z "$perm_delete_res_error_code" ]]; then
   deleted_count=$(echo "$perm_delete_res" | jq "length")
   echo "Done: $deleted_count subject successfully deleted."
+  docker-compose down
   exit 0
 else
   echo "ERROR: Failed to delete subject: $delete_res_error_code -> $perm_delete_res_error_code"
