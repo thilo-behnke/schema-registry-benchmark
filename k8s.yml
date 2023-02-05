@@ -45,10 +45,20 @@ spec:
           image: bitnami/kafka
           ports:
             - containerPort: 9092
-              name: kafka-tcp-port
+              name: kafka-int-port
+            - containerPort: 9093
+              name: kafka-ext-port
           env:
             - name: ALLOW_PLAINTEXT_LISTENER
               value: 'yes'
+            - name: KAFKA_CFG_LISTENERS
+              value: INTERNAL://localhost:9092, EXTERNAL://0.0.0.0:9093
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: INTERNAL://localhost:9092,EXTERNAL://kafka-service:9093
+            - name: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+              value: INTERNAL
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
             - name: KAFKA_CFG_ZOOKEEPER_CONNECT
               value: zookeeper-service:2181
 ---
@@ -76,7 +86,7 @@ spec:
               name: sr-http-port
           env:
             - name: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
-              value: 'kafka-service:9092'
+              value: 'kafka-service:9093'
             - name: SCHEMA_REGISTRY_HOST_NAME
               value: 'localhost'
         - name: network-sidecar
@@ -106,10 +116,14 @@ spec:
   selector:
     app: kafka
   ports:
-    - name: kafka-port
+    - name: kafka-port-internal
       protocol: TCP
       port: 9092
-      targetPort: kafka-tcp-port
+      targetPort: kafka-int-port
+    - name: kafka-port-external
+      protocol: TCP
+      port: 9093
+      targetPort: kafka-ext-port
 ---
 apiVersion: v1
 kind: Service
