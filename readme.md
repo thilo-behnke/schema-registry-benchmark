@@ -154,4 +154,5 @@ Referring to version `v7.3.1`.
     - The internal structure of a `ParsedSchema` is larger than the `RawSchema`, which is basically just the JSON Avro schema (and some more metadata)
   - The default size for the cache is `1000` with an expiration of `300s` 
     - If a `ParsedSchema` is not within the cache, it needs to be parsed again from the `RawSchema`
-    - TODO: The investigation on effects of cache misses is another investigation
+    - The script `query-schemas.sh` can be used to test the caching mechanism:
+      - Querying a schema takes 1-2ms, there is noticeable difference weather the schema is or isn't in cache. 

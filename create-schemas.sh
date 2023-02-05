@@ -2,7 +2,7 @@
 
 set -e
 
-log_dir=logs
+log_dir=logs/create
 docker_usage_log=docker_usage.log
 java_heap_log=java-heap.log
 

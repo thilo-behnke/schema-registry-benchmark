@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-deployment
+  labels:
+    app: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: bitnami/zookeeper
+          ports:
+            - containerPort: 2181
+              name: zk-tcp-port
+          env:
+            - name: ALLOW_ANONYMOUS_LOGIN
+              value: 'yes'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-deployment
+  labels:
+    app: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka
+          ports:
+            - containerPort: 9092
+              name: kafka-tcp-port
+          env:
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: 'yes'
+            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+              value: zookeeper-service:2181
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schema-registry-deployment
+  labels:
+    app: schema-registry
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: schema-registry
+  template:
+    metadata:
+      labels:
+        app: schema-registry
+    spec:
+      containers:
+        - name: schema-registry
+          image: confluentinc/cp-schema-registry
+          ports:
+            - containerPort: 8081
+              name: sr-http-port
+          env:
+            - name: SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS
+              value: 'kafka-service:9092'
+            - name: SCHEMA_REGISTRY_HOST_NAME
+              value: 'localhost'
+        - name: network-sidecar
+          image: nicolaka/netshoot
+          imagePullPolicy: Always
+          command: [ "/bin/bash" ]
+          args: [ "-c", "while true; do ping localhost; sleep 60;done" ]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+spec:
+  selector:
+    app: zookeeper
+  ports:
+    - name: zookeeper-port
+      protocol: TCP
+      port: 2181
+      targetPort: zk-tcp-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: kafka-port
+      protocol: TCP
+      port: 9092
+      targetPort: kafka-tcp-port
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schema-registry-service
+spec:
+  selector:
+    app: schema-registry
+  ports:
+    - name: schema-registry-port
+      protocol: TCP
+      port: 8081
+      targetPort: sr-http-port
