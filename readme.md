@@ -61,17 +61,17 @@ Benchmark and alysis for the [Confluent Schema Registry](https://github.com/conf
 
 - The schema registry has an upper bound of `2^31-1` (=2147483647) schema versions in a subject it can hold (due to using a java integer for schema ids + negative numbers not being allowed for ids)
 
-```
-curl localhost:8081/subjects/my-subject/versions/-12
--> {"error_code":42202,"message":"The specified version '-12' is not a valid version id. Allowed values are between [1, 2^32-1] and the string \"latest\""}
+```bash
+> curl localhost:8081/subjects/my-subject/versions/-12
+{"error_code":42202,"message":"The specified version '-12' is not a valid version id. Allowed values are between [1, 2^32-1] and the string \"latest\""}
 
-curl localhost:8081/subjects/my-subject/versions/2147483647
+> curl localhost:8081/subjects/my-subject/versions/2147483647
 {"error_code":40402,"message":"Version 2147483647 not found."}
 ```
 
 - The schema registry has an upper bound of `2^31-1` (=2147483647) total schema versions in a schema it can hold (due to using a java integer for schema ids + negative numbers not being allowed for ids)
 
-```
+```bash
 # ID too high
 > curl -X POST -H "Content-Type: application/json" \
   --data '{"schemaType": "AVRO", "version":1, "id":2147483648, "schema":"{\"type\":\"record\",\"name\":\"model\",\"namespace\":\"namespace\",\"fields\":[{\"name\":\"field\",\"type\":\"string\"}]}" }' \
