@@ -59,11 +59,42 @@ Benchmark and alysis for the [Confluent Schema Registry](https://github.com/conf
  
 # Blackbox analysis: findings
 
-- The schema registry has an upper bound of `2^31-1` schemas it can hold (due to using a java integer for schema ids + negative numbers not being allowed for ids)
+- The schema registry has an upper bound of `2^31-1` (=2147483647) schema versions in a subject it can hold (due to using a java integer for schema ids + negative numbers not being allowed for ids)
 
 ```
 curl localhost:8081/subjects/my-subject/versions/-12
--> {"error_code":42202,"message":"The specified version '-12' is not a valid version id. Allowed values are between [1, 2^31-1] and the string \"latest\""}
+-> {"error_code":42202,"message":"The specified version '-12' is not a valid version id. Allowed values are between [1, 2^32-1] and the string \"latest\""}
+
+curl localhost:8081/subjects/my-subject/versions/2147483647
+{"error_code":40402,"message":"Version 2147483647 not found."}
+```
+
+- The schema registry has an upper bound of `2^31-1` (=2147483647) total schema versions in a schema it can hold (due to using a java integer for schema ids + negative numbers not being allowed for ids)
+
+```
+# ID too high
+> curl -X POST -H "Content-Type: application/json" \
+  --data '{"schemaType": "AVRO", "version":1, "id":2147483648, "schema":"{\"type\":\"record\",\"name\":\"model\",\"namespace\":\"namespace\",\"fields\":[{\"name\":\"field\",\"type\":\"string\"}]}" }' \
+  http://localhost:8081/subjects/my-subject/versions
+{"error_code":400,"message":"Numeric value (2147483648) out of range of int (-2147483648 - 2147483647)"}
+
+# ID at upper limit
+> curl -X POST -H "Content-Type: application/json" \
+--data '{"schemaType": "AVRO", "version":1, "id":2147483647, "schema":"{\"type\":\"record\",\"name\":\"model\",\"namespace\":\"namespace\",\"fields\":[{\"name\":\"field\",\"type\":\"string\"}]}" }' \
+http://localhost:8081/subjects/my-subject/versions
+{"id":2147483647}
+
+# Negative ID is ignored
+> curl -X POST -H "Content-Type: application/json" \
+--data '{"schemaType": "AVRO", "version":1, "id":-2147483648, "schema":"{\"type\":\"record\",\"name\":\"model\",\"namespace\":\"namespace\",\"fields\":[{\"name\":\"field\",\"type\":\"string\"}]}" }' \
+http://localhost:8081/subjects/my-subject/versions
+{"id":2147483647}
+
+# It's possible to register a schema version with ID 0, even though when registering, the first generated schema version has ID 1
+curl -X POST -H "Content-Type: application/json" \
+--data '{"schemaType": "AVRO", "version":1, "id":-1, "schema":"{\"type\":\"record\",\"name\":\"model\",\"namespace\":\"namespace\",\"fields\":[{\"name\":\"field\",\"type\":\"string\"}]}" }' \
+http://localhost:8081/subjects/my-subject/versions
+{"id":0}
 ```
 
 - The schema registry needs to hold all schemas in memory
